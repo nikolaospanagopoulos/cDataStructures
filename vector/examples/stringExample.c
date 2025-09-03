@@ -1,4 +1,4 @@
-#include "vector.h"
+#include "../vector.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -37,8 +37,21 @@ int main() {
     printf("string %lu: %s\n", i, (char *)str);
     free(str);
   }
+  printf("remove first\n");
+  void *firstName = NULL;
+  remove_front(&string_vector, true, &firstName);
+  for (size_t i = 0; i < string_vector.size; i++) {
+    void *str = NULL;
+    vector_get(&string_vector, i, &str);
+    printf("string %lu: %s\n", i, (char *)str);
+    free(str);
+  }
+
+  printf("name removed is: %s\n", (char *)firstName);
+  free(firstName);
+
   printf("\ndelete test\n");
-  vector_remove_by_index(&string_vector, 1);
+  vector_remove_by_index(&string_vector, 4);
   for (size_t i = 0; i < string_vector.size; i++) {
     void *str = NULL;
     vector_get(&string_vector, i, &str);

@@ -1,5 +1,6 @@
-#include "vector.h"
+#include "../vector.h"
 #include <stdio.h>
+#include <time.h>
 
 int main() {
 
@@ -27,6 +28,18 @@ int main() {
     printf("%d\n", *(int *)tmpElement);
     free(tmpElement);
   }
+  printf("remove front\n");
+  void *tmpEl = NULL;
+  remove_front(&v2, true, &tmpEl);
+  for (size_t i = 0; i < v2.size; i++) {
+    void *tmpElement = NULL;
+    vector_get(&v2, i, &tmpElement);
+    printf("%d\n", *(int *)tmpElement);
+    free(tmpElement);
+  }
+
+  printf("removed element: %d\n", *(int *)tmpEl);
+  free(tmpEl);
 
   printf("rotate_left \n");
   void *returned = NULL;

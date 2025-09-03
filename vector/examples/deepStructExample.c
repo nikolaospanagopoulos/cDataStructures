@@ -1,4 +1,4 @@
-#include "vector.h"
+#include "../vector.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -53,6 +53,26 @@ int main() {
     vector_get(&struct_vec_deep, i, &tmpElement);
     printf("name: %s, age: %d\n", ((struct person *)tmpElement)->name,
            ((struct person *)tmpElement)->age);
+    free(((struct person *)tmpElement)->name);
+    free(tmpElement);
+  }
+
+  printf("remove first test\n");
+  void *first_person = NULL;
+  remove_front(&struct_vec_deep, true, &first_person);
+
+  printf("removed: %s\n", ((struct person *)first_person)->name);
+  free(((struct person *)first_person)->name);
+  free(first_person);
+
+  printf("\n");
+
+  for (size_t i = 0; i < struct_vec_deep.size; i++) {
+    void *tmpElement = NULL;
+    vector_get(&struct_vec_deep, i, &tmpElement);
+    printf("name: %s, age: %d\n", ((struct person *)tmpElement)->name,
+           ((struct person *)tmpElement)->age);
+    free(((struct person *)tmpElement)->name);
     free(tmpElement);
   }
 
