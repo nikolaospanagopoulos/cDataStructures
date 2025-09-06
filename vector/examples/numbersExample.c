@@ -30,7 +30,7 @@ int main() {
   }
   printf("remove front\n");
   void *tmpEl = NULL;
-  remove_front(&v2, true, &tmpEl);
+  vector_remove_front(&v2, true, &tmpEl);
   for (size_t i = 0; i < v2.size; i++) {
     void *tmpElement = NULL;
     vector_get(&v2, i, &tmpElement);
@@ -55,10 +55,7 @@ int main() {
 
   // advanced_get(&v2, 4);
   //    rotate_right(&v2);
-  rotate_left(&v2);
-  rotate_left(&v2);
-  rotate_right(&v2);
-  rotate_right(&v2);
+  vector_rotate_right(&v2);
   for (size_t i = 0; i < v2.size; i++) {
     void *tmpElement = NULL;
     vector_get(&v2, i, &tmpElement);

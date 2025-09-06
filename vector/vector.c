@@ -1,8 +1,14 @@
 #include "vector.h"
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// 1. check errors (NULL)
+// 2. check locks
+// 3. check examples
+// 4. consistant names
 
 enum VECTOR_ERRORS vector_init(struct vector *v, size_t elem_size,
                                void *copy_fn, void *free_fn, void *copy_get) {
@@ -20,6 +26,50 @@ enum VECTOR_ERRORS vector_init(struct vector *v, size_t elem_size,
   return OK;
 }
 
+static enum VECTOR_ERRORS remove_by_index_locked(struct vector *v,
+                                                 size_t index) {
+  if (index < 0 || index >= v->size) {
+    return OUT_OF_BOUNDS_ERROR;
+  }
+  if (v->size == 0) {
+    return VECTOR_EMPTY;
+  }
+  void *to_remove = (char *)v->data + index * v->element_size;
+  if (v->free_fn) {
+    v->free_fn(to_remove);
+  }
+  for (size_t i = index + 1; i < v->size; i++) {
+    memcpy((char *)v->data + ((i - 1) * v->element_size),
+           (char *)v->data + i * v->element_size, v->element_size);
+  }
+  v->size--;
+  return OK;
+}
+
+enum VECTOR_ERRORS vector_remove_front(struct vector *v, bool return_removed,
+                                       void **value) {
+  pthread_rwlock_wrlock(&v->lock);
+  if (v->size == 0) {
+    pthread_rwlock_unlock(&v->lock);
+    return VECTOR_EMPTY;
+  }
+  if (return_removed) {
+    if (v->copy_get) {
+      *value = v->copy_get((char *)v->data);
+    } else {
+      *value = malloc(v->element_size);
+      if (!*value) {
+        pthread_rwlock_unlock(&v->lock);
+        return ALLOC_ERROR;
+      }
+      memcpy(*value, (char *)v->data, v->element_size);
+    }
+  }
+  enum VECTOR_ERRORS result = remove_by_index_locked(v, 0);
+  pthread_rwlock_unlock(&v->lock);
+  return result;
+}
+
 static enum VECTOR_ERRORS expandCapacity(struct vector *v) {
   v->capacity *= 2;
   void *new_realloc = realloc(v->data, v->capacity * v->element_size);
@@ -31,21 +81,11 @@ static enum VECTOR_ERRORS expandCapacity(struct vector *v) {
 }
 enum VECTOR_ERRORS vector_remove_by_index(struct vector *v, size_t index) {
   pthread_rwlock_wrlock(&v->lock); // writers lock
-  if (index < 0 || index >= v->size) {
-    pthread_rwlock_unlock(&v->lock);
-    return OUT_OF_BOUNDS_ERROR;
-  }
-  void *to_remove = (char *)v->data + index * v->element_size;
-  if (v->free_fn) {
-    v->free_fn(to_remove);
-  }
-  for (size_t i = index + 1; i < v->size; i++) {
-    memcpy((char *)v->data + ((i - 1) * v->element_size),
-           (char *)v->data + i * v->element_size, v->element_size);
-  }
-  v->size--;
+
+  enum VECTOR_ERRORS result = remove_by_index_locked(v, index);
+
   pthread_rwlock_unlock(&v->lock);
-  return OK;
+  return result;
 }
 enum VECTOR_ERRORS vector_push(struct vector *v, void *element) {
   pthread_rwlock_wrlock(&v->lock); // writers lock
@@ -73,7 +113,8 @@ enum VECTOR_ERRORS vector_push(struct vector *v, void *element) {
   pthread_rwlock_unlock(&v->lock);
   return OK;
 }
-enum VECTOR_ERRORS advanced_get(struct vector *v, size_t index, void **result) {
+enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
+                                       void **result) {
   pthread_rwlock_wrlock(&v->lock);
   if (v->size == 0 || index >= v->size) {
     pthread_rwlock_unlock(&v->lock);
@@ -99,7 +140,7 @@ enum VECTOR_ERRORS advanced_get(struct vector *v, size_t index, void **result) {
   pthread_rwlock_unlock(&v->lock);
   return OK;
 }
-enum VECTOR_ERRORS rotate_left(struct vector *v) {
+enum VECTOR_ERRORS vector_rotate_left(struct vector *v) {
   pthread_rwlock_wrlock(&v->lock);
   if (v->size < 2) {
     pthread_rwlock_unlock(&v->lock);
@@ -123,7 +164,7 @@ enum VECTOR_ERRORS rotate_left(struct vector *v) {
   pthread_rwlock_unlock(&v->lock);
   return OK;
 }
-enum VECTOR_ERRORS rotate_right(struct vector *v) {
+enum VECTOR_ERRORS vector_rotate_right(struct vector *v) {
   pthread_rwlock_wrlock(&v->lock);
   if (v->size < 2) {
     pthread_rwlock_unlock(&v->lock);

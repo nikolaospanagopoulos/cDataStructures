@@ -1,10 +1,13 @@
 #pragma once
 #include <pthread.h>
+#include <stdbool.h>
 #include <stdlib.h>
 enum VECTOR_ERRORS {
   OK = 0,
   ALLOC_ERROR,
   OUT_OF_BOUNDS_ERROR,
+  VECTOR_EMPTY,
+  VECTOR_NULL_PTR
 };
 
 struct vector {
@@ -18,7 +21,11 @@ struct vector {
   pthread_rwlock_t lock;
 };
 
-enum VECTOR_ERRORS advanced_get(struct vector *v, size_t index, void **result);
+enum VECTOR_ERRORS vector_remove_front(struct vector *v, bool return_removed,
+                                       void **value);
+
+enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
+                                       void **result);
 /**
  * Removes an element from the vector at a specified index.
  *
@@ -68,7 +75,7 @@ static enum VECTOR_ERRORS expandCapacity(struct vector *v);
  * @return OK on success, ALLOC_ERROR if memory allocation for temporary storage
  * fails.
  */
-enum VECTOR_ERRORS rotate_left(struct vector *v);
+enum VECTOR_ERRORS vector_rotate_left(struct vector *v);
 /**
  * Rotates the elements of the vector one position to the right.
  *
@@ -83,7 +90,7 @@ enum VECTOR_ERRORS rotate_left(struct vector *v);
  * @return OK on success, ALLOC_ERROR if memory allocation for temporary storage
  * fails.
  */
-enum VECTOR_ERRORS rotate_right(struct vector *v);
+enum VECTOR_ERRORS vector_rotate_right(struct vector *v);
 /**
  * @brief Appends an element to the end of the vector.
  *

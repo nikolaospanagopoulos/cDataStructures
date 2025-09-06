@@ -59,7 +59,7 @@ int main() {
 
   printf("remove first test\n");
   void *first_person = NULL;
-  remove_front(&struct_vec_deep, true, &first_person);
+  vector_remove_front(&struct_vec_deep, true, &first_person);
 
   printf("removed: %s\n", ((struct person *)first_person)->name);
   free(((struct person *)first_person)->name);

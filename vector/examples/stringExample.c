@@ -60,7 +60,7 @@ int main() {
   }
 
   printf("\nshift left test\n");
-  rotate_left(&string_vector);
+  vector_rotate_left(&string_vector);
   for (size_t i = 0; i < string_vector.size; i++) {
     void *str = NULL;
     vector_get(&string_vector, i, &str);
@@ -69,7 +69,7 @@ int main() {
   }
 
   printf("\nshift right test\n");
-  rotate_right(&string_vector);
+  vector_rotate_right(&string_vector);
   for (size_t i = 0; i < string_vector.size; i++) {
     void *str = NULL;
     vector_get(&string_vector, i, &str);
@@ -80,7 +80,7 @@ int main() {
   printf("\nadvanced get\n");
 
   void *str = NULL;
-  advanced_get(&string_vector, 1, &str);
+  vector_advanced_get(&string_vector, 1, &str);
   printf("found: %s\n", (char *)str);
   free(str);
 
