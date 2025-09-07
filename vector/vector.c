@@ -8,10 +8,97 @@
 // 1. check errors (NULL)
 // 2. check locks
 // 3. check examples
-// 4. consistant names
+
+static enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
+                                              void **result);
+enum VECTOR_ERRORS vector_find(struct vector *v, void *value_to_find,
+                               int *index) {
+  pthread_rwlock_rdlock(&v->lock);
+  if (!value_to_find) {
+    pthread_rwlock_unlock(&v->lock);
+    return VECTOR_NULL_PTR;
+  }
+  if (v->size == 0) {
+    pthread_rwlock_unlock(&v->lock);
+    return VECTOR_EMPTY;
+  }
+  if (!v->compare_func) {
+    pthread_rwlock_unlock(&v->lock);
+    return FUNCTION_MISSING;
+  }
+  *index = -1;
+  for (size_t i = 0; i < v->size; i++) {
+    void *vector_element = (char *)v->data + (i * v->element_size);
+    if (v->compare_func(vector_element, value_to_find)) {
+      *index = i;
+      pthread_rwlock_unlock(&v->lock);
+      return OK;
+    }
+  }
+  pthread_rwlock_unlock(&v->lock);
+  return NOT_FOUND;
+}
+enum VECTOR_ERRORS vector_improved_find(struct vector *v, void *value_to_find,
+                                        int *index, void **result) {
+  pthread_rwlock_wrlock(&v->lock);
+  if (!value_to_find) {
+    pthread_rwlock_unlock(&v->lock);
+    return VECTOR_NULL_PTR;
+  }
+  if (v->size == 0) {
+    pthread_rwlock_unlock(&v->lock);
+    return VECTOR_EMPTY;
+  }
+  *index = -1;
+  for (size_t i = 0; i < v->size; i++) {
+    void *vector_element = (char *)v->data + (i * v->element_size);
+    if (v->compare_func(vector_element, value_to_find)) {
+      *index = i;
+      break;
+    }
+  }
+  if (*index == -1) {
+    pthread_rwlock_unlock(&v->lock);
+    return NOT_FOUND;
+  }
+  enum VECTOR_ERRORS result_err = vector_advanced_get(v, *index, result);
+  if (*index > 0) {
+    *index -= 1;
+  }
+
+  pthread_rwlock_unlock(&v->lock);
+  return result_err;
+}
+
+static enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
+                                              void **result) {
+
+  if (v->copy_get) {
+    *result = v->copy_get((char *)v->data + (index)*v->element_size);
+  } else {
+    *result = malloc(v->element_size);
+    if (!*result) {
+      return ALLOC_ERROR;
+    }
+    memcpy(*result, (char *)v->data + (index)*v->element_size, v->element_size);
+  }
+
+  if (index > 0) {
+    char *prev = (char *)v->data + (index - 1) * v->element_size;
+    char *next = (char *)v->data + (index)*v->element_size;
+
+    unsigned char tmp[v->element_size];
+    memcpy(tmp, prev, v->element_size);
+    memcpy(prev, next, v->element_size);
+    memcpy(next, tmp, v->element_size);
+  }
+
+  return OK;
+}
 
 enum VECTOR_ERRORS vector_init(struct vector *v, size_t elem_size,
-                               void *copy_fn, void *free_fn, void *copy_get) {
+                               void *copy_fn, void *free_fn, void *copy_get,
+                               void *compare_func) {
   v->element_size = elem_size;
   v->size = 0;
   v->capacity = 10;
@@ -22,6 +109,7 @@ enum VECTOR_ERRORS vector_init(struct vector *v, size_t elem_size,
   v->copy_fn = copy_fn;
   v->free_fn = free_fn;
   v->copy_get = copy_get;
+  v->compare_func = compare_func;
   pthread_rwlock_init(&v->lock, NULL);
   return OK;
 }
@@ -110,33 +198,6 @@ enum VECTOR_ERRORS vector_push(struct vector *v, void *element) {
            v->element_size);
   }
   v->size++;
-  pthread_rwlock_unlock(&v->lock);
-  return OK;
-}
-enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
-                                       void **result) {
-  pthread_rwlock_wrlock(&v->lock);
-  if (v->size == 0 || index >= v->size) {
-    pthread_rwlock_unlock(&v->lock);
-    return OUT_OF_BOUNDS_ERROR;
-  }
-  if (v->copy_get) {
-    *result = v->copy_get((char *)v->data + (index)*v->element_size);
-  } else {
-    *result = malloc(v->element_size);
-
-    memcpy(*result, (char *)v->data + (index)*v->element_size, v->element_size);
-  }
-
-  if (index > 0) {
-    char *prev = (char *)v->data + (index - 1) * v->element_size;
-    char *next = (char *)v->data + (index)*v->element_size;
-
-    unsigned char tmp[v->element_size];
-    memcpy(tmp, prev, v->element_size);
-    memcpy(prev, next, v->element_size);
-    memcpy(next, tmp, v->element_size);
-  }
   pthread_rwlock_unlock(&v->lock);
   return OK;
 }

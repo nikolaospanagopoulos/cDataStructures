@@ -7,7 +7,9 @@ enum VECTOR_ERRORS {
   ALLOC_ERROR,
   OUT_OF_BOUNDS_ERROR,
   VECTOR_EMPTY,
-  VECTOR_NULL_PTR
+  VECTOR_NULL_PTR,
+  NOT_FOUND,
+  FUNCTION_MISSING
 };
 
 struct vector {
@@ -18,14 +20,18 @@ struct vector {
   void *(*copy_fn)(void *element);
   void (*free_fn)(void *element);
   void *(*copy_get)(void *element);
+  bool (*compare_func)(void *, void *);
   pthread_rwlock_t lock;
 };
 
+enum VECTOR_ERRORS vector_find(struct vector *v, void *value_to_find,
+                               int *index);
+
 enum VECTOR_ERRORS vector_remove_front(struct vector *v, bool return_removed,
                                        void **value);
+enum VECTOR_ERRORS vector_improved_find(struct vector *v, void *value_to_find,
+                                        int *index, void **result);
 
-enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
-                                       void **result);
 /**
  * Removes an element from the vector at a specified index.
  *
@@ -59,8 +65,8 @@ enum VECTOR_ERRORS vector_remove_by_index(struct vector *v, size_t index);
  * @return OK on success, ALLOC_ERROR if memory allocation fails.
  */
 enum VECTOR_ERRORS vector_init(struct vector *v, size_t elem_size,
-                               void *copy_fn, void *free_fn, void *copy_get);
-static enum VECTOR_ERRORS expandCapacity(struct vector *v);
+                               void *copy_fn, void *free_fn, void *copy_get,
+                               void *compare_func);
 /**
  * Rotates the elements of the vector one position to the left.
  *

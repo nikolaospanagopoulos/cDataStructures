@@ -18,11 +18,22 @@ void *copy_str_get(void *element) {
   return new_str;
 }
 
+bool vector_element_equals(void *elementInVector, void *elementToSearch) {
+  elementToSearch = (char *)elementToSearch;
+  char *elementInVec = *(char **)elementInVector;
+  if (strncmp(elementToSearch, elementInVec, strlen(elementToSearch)) != 0) {
+    return false;
+  }
+  printf("found\n");
+  return true;
+}
+
 void free_str(void *element) { free(*(char **)element); }
 
 int main() {
   struct vector string_vector;
-  vector_init(&string_vector, sizeof(char *), copy_str, free_str, copy_str_get);
+  vector_init(&string_vector, sizeof(char *), copy_str, free_str, copy_str_get,
+              vector_element_equals);
 
   vector_push(&string_vector, "nikos");
   vector_push(&string_vector, "george");
@@ -37,9 +48,33 @@ int main() {
     printf("string %lu: %s\n", i, (char *)str);
     free(str);
   }
-  printf("remove first\n");
+
+  printf("\nfind example\n");
+
+  int index = 0;
+  int *index_found = &index;
+  vector_find(&string_vector, "john", index_found);
+
+  printf("found at index: %d\n", *index_found);
+
+  printf("\nimproved find example\n");
+  void *str = NULL;
+  int indexToFind = 0;
+  vector_improved_find(&string_vector, "john", &indexToFind, &str);
+  vector_improved_find(&string_vector, "john", &indexToFind, &str);
+  printf("found: %s\n", (char *)str);
+  free(str);
+
+  for (size_t i = 0; i < string_vector.size; i++) {
+    void *str = NULL;
+    vector_get(&string_vector, i, &str);
+    printf("string %lu: %s\n", i, (char *)str);
+    free(str);
+  }
+
+  printf("/nremove first\n");
   void *firstName = NULL;
-  remove_front(&string_vector, true, &firstName);
+  vector_remove_front(&string_vector, true, &firstName);
   for (size_t i = 0; i < string_vector.size; i++) {
     void *str = NULL;
     vector_get(&string_vector, i, &str);
@@ -79,17 +114,6 @@ int main() {
 
   printf("\nadvanced get\n");
 
-  void *str = NULL;
-  vector_advanced_get(&string_vector, 1, &str);
-  printf("found: %s\n", (char *)str);
-  free(str);
-
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
   vector_free(&string_vector);
 
   return 0;
