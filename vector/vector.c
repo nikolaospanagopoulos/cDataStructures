@@ -5,9 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-// 1. check errors (NULL)
-// 2. check locks
-// 3. check examples
+size_t vector_get_size(struct vector *v) {
+  pthread_rwlock_rdlock(&v->lock);
+  size_t size = v->size;
+  pthread_rwlock_unlock(&v->lock);
+  return size;
+}
 
 static enum VECTOR_ERRORS vector_advanced_get(struct vector *v, size_t index,
                                               void **result);

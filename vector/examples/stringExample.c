@@ -30,89 +30,57 @@ bool vector_element_equals(void *elementInVector, void *elementToSearch) {
 
 void free_str(void *element) { free(*(char **)element); }
 
+struct vector string_vector;
+char *names[] = {"nikos",  "george", "john", "mike",
+                 "billie", "andrew", "steve"};
+void *write_thread(void *arg) {
+
+  for (int i = 0; i < 4; i++) {
+    vector_push(&string_vector, names[i]);
+  }
+  return NULL;
+}
+
+void *read_thread1(void *arg) {
+  for (int i = 0; i < 10; i++) {
+    void *read = NULL;
+    size_t size = vector_get_size(&string_vector);
+    if (size > 0) {
+      size_t index = i % size; // wrap safely
+      if (vector_get(&string_vector, index, &read) == OK) {
+        printf("[Reader] index %zu -> %s\n", index, (char *)read);
+      }
+    }
+    if (read)
+      free(read);
+  }
+  return NULL;
+}
+
+void *write_thread2(void *arg) {
+
+  for (int i = 4; i < 6; i++) {
+    vector_push(&string_vector, names[i]);
+  }
+  return NULL;
+}
+
 int main() {
-  struct vector string_vector;
+
   vector_init(&string_vector, sizeof(char *), copy_str, free_str, copy_str_get,
               vector_element_equals);
 
-  vector_push(&string_vector, "nikos");
-  vector_push(&string_vector, "george");
-  vector_push(&string_vector, "john");
-  vector_push(&string_vector, "steve");
-  vector_push(&string_vector, "michael");
-  vector_push(&string_vector, "jim");
+  pthread_t writer1, writer2, reader1, reader2;
 
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
+  pthread_create(&writer1, NULL, write_thread, NULL);
+  pthread_create(&writer2, NULL, write_thread2, NULL);
+  pthread_create(&reader1, NULL, read_thread1, NULL);
+  pthread_create(&reader2, NULL, read_thread1, NULL);
 
-  printf("\nfind example\n");
-
-  int index = 0;
-  int *index_found = &index;
-  vector_find(&string_vector, "john", index_found);
-
-  printf("found at index: %d\n", *index_found);
-
-  printf("\nimproved find example\n");
-  void *str = NULL;
-  int indexToFind = 0;
-  vector_improved_find(&string_vector, "john", &indexToFind, &str);
-  vector_improved_find(&string_vector, "john", &indexToFind, &str);
-  printf("found: %s\n", (char *)str);
-  free(str);
-
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
-
-  printf("/nremove first\n");
-  void *firstName = NULL;
-  vector_remove_front(&string_vector, true, &firstName);
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
-
-  printf("name removed is: %s\n", (char *)firstName);
-  free(firstName);
-
-  printf("\ndelete test\n");
-  vector_remove_by_index(&string_vector, 4);
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
-
-  printf("\nshift left test\n");
-  vector_rotate_left(&string_vector);
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
-
-  printf("\nshift right test\n");
-  vector_rotate_right(&string_vector);
-  for (size_t i = 0; i < string_vector.size; i++) {
-    void *str = NULL;
-    vector_get(&string_vector, i, &str);
-    printf("string %lu: %s\n", i, (char *)str);
-    free(str);
-  }
-
-  printf("\nadvanced get\n");
+  pthread_join(writer1, NULL);
+  pthread_join(writer2, NULL);
+  pthread_join(reader1, NULL);
+  pthread_join(reader2, NULL);
 
   vector_free(&string_vector);
 

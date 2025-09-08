@@ -24,6 +24,7 @@ struct vector {
   pthread_rwlock_t lock;
 };
 
+size_t vector_get_size(struct vector *v);
 enum VECTOR_ERRORS vector_find(struct vector *v, void *value_to_find,
                                int *index);
 
