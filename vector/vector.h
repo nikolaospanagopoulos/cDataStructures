@@ -204,3 +204,26 @@ void vector_free(struct vector *v);
  */
 
 enum VECTOR_ERRORS vector_get(struct vector *v, size_t index, void **result);
+/**
+ * @brief Check if the vector is empty.
+ *
+ * @param v Pointer to the vector.
+ * @return true if empty, false otherwise.
+ */
+bool vector_is_empty(struct vector *v);
+/**
+ * @brief Get the current capacity of the vector (allocated slots).
+ *
+ * @param v Pointer to the vector.
+ * @return Current capacity of the vector.
+ */
+size_t vector_capacity(struct vector *v);
+/**
+ * @brief Remove all elements from the vector without freeing capacity.
+ *
+ * Calls free function on each element if provided, but keeps the allocated
+ * buffer so pushes can continue without reallocating immediately.
+ *
+ * @param v Pointer to the vector.
+ */
+void vector_clear(struct vector *v);

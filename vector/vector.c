@@ -285,3 +285,28 @@ enum VECTOR_ERRORS vector_get(struct vector *v, size_t index, void **result) {
   pthread_rwlock_unlock(&v->lock);
   return OK;
 }
+bool vector_is_empty(struct vector *v) {
+  pthread_rwlock_rdlock(&v->lock);
+  bool is_empty = v->size == 0;
+  pthread_rwlock_unlock(&v->lock);
+  return is_empty;
+}
+
+size_t vector_capacity(struct vector *v) {
+  pthread_rwlock_rdlock(&v->lock);
+  size_t capacity = v->capacity;
+  pthread_rwlock_unlock(&v->lock);
+  return capacity;
+}
+
+void vector_clear(struct vector *v) {
+  pthread_rwlock_wrlock(&v->lock);
+  if (v->free_fn) {
+    for (size_t i = 0; i < v->size; i++) {
+      v->free_fn((char *)v->data + i * v->element_size);
+    }
+  }
+  memset(v->data, 0, v->element_size * v->size);
+  v->size = 0;
+  pthread_rwlock_unlock(&v->lock);
+}
