@@ -31,22 +31,37 @@ void free_struct(void *element) {
   free(to_free);
 }
 
+bool vector_element_equals(void *element_in_vector, void *element_to_search) {
+  struct person *person_to_search = (struct person *)element_to_search;
+  struct person *person_in_vector = *(struct person **)element_in_vector;
+  if (person_in_vector->age == person_to_search->age &&
+      strncmp(person_in_vector->name, person_to_search->name,
+              strlen(person_to_search->name)) == 0) {
+    return true;
+  }
+  return false;
+}
+
 int main() {
 
-  printf("struct deep copies vec\n");
+  printf("\nvector of deep copied structs\n");
+  printf("-------------------------------\n");
 
   struct person person = {.name = "nikos", .age = 32};
   struct person person2 = {.name = "john", .age = 22};
   struct person person3 = {.name = "george", .age = 52};
 
   struct vector struct_vec_deep;
+  // initialize vector
   vector_init(&struct_vec_deep, sizeof(struct person *), copy_struct,
-              free_struct, copy_get);
+              free_struct, copy_get, vector_element_equals);
+
+  // push values
   vector_push(&struct_vec_deep, &person);
   vector_push(&struct_vec_deep, &person2);
   vector_push(&struct_vec_deep, &person3);
 
-  // vector_remove_by_index(&struct_vec_deep, 1);
+  printf("printing vector values: \n");
 
   for (size_t i = 0; i < struct_vec_deep.size; i++) {
     void *tmpElement = NULL;
@@ -57,7 +72,7 @@ int main() {
     free(tmpElement);
   }
 
-  printf("remove first test\n");
+  printf("\nremove first test\n");
   void *first_person = NULL;
   vector_remove_front(&struct_vec_deep, true, &first_person);
 
@@ -65,7 +80,7 @@ int main() {
   free(((struct person *)first_person)->name);
   free(first_person);
 
-  printf("\n");
+  printf("\nvalues after removal:\n");
 
   for (size_t i = 0; i < struct_vec_deep.size; i++) {
     void *tmpElement = NULL;
@@ -76,6 +91,21 @@ int main() {
     free(tmpElement);
   }
 
+  printf("\nsearch test\n");
+
+  // index that will be replaced with the found value position (if found)
+  int found_index = -1;
+  vector_find(&struct_vec_deep, &person3, &found_index);
+
+  printf("found result index is: %d\n", found_index);
+
+  void *found = NULL;
+  vector_get(&struct_vec_deep, found_index, &found);
+
+  printf("found value is the person with name: %s and age %d\n",
+         ((struct person *)found)->name, ((struct person *)found)->age);
+
+  // free vector
   vector_free(&struct_vec_deep);
 
   return 0;
