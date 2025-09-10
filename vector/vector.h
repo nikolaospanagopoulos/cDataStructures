@@ -24,12 +24,66 @@ struct vector {
   pthread_rwlock_t lock;
 };
 
+/**
+ * @brief Get the current number of elements in the vector.
+ *
+ * Thread-safe read of the size field.
+ *
+ * @param v Pointer to the vector.
+ *
+ * @return Current size of the vector.
+ */
 size_t vector_get_size(struct vector *v);
+
+/**
+ * @brief Find an element in the vector.
+ *
+ * Uses the provided compare function to search for a match.
+ *
+ * @param v             Pointer to the vector.
+ * @param value_to_find Pointer to the value to search for.
+ * @param index         Output pointer for the found index, or -1 if not found.
+ *
+ * @return OK if found, NOT_FOUND if not found,
+ *         VECTOR_NULL_PTR if value_to_find is NULL,
+ *         VECTOR_EMPTY if the vector is empty,
+ *         FUNCTION_MISSING if no compare_func was set.
+ */
 enum VECTOR_ERRORS vector_find(struct vector *v, void *value_to_find,
                                int *index);
 
+/**
+ * @brief Remove the first element of the vector.
+ *
+ * Optionally returns a copy of the removed element.
+ *
+ * @param v              Pointer to the vector.
+ * @param return_removed Whether to return the removed value.
+ * @param value          Output pointer for the removed value (if requested.
+ * Heap allocated).
+ *
+ * @return OK on success, VECTOR_EMPTY if vector is empty,
+ *         ALLOC_ERROR if allocation fails for return copy.
+ */
 enum VECTOR_ERRORS vector_remove_front(struct vector *v, bool return_removed,
                                        void **value);
+/**
+ * @brief Improved find with optional result retrieval and element swap.
+ *
+ * Searches for the given value, retrieves a copy of the element if found,
+ * and swaps it with the previous element (if index > 0).
+ *
+ * @param v             Pointer to the vector.
+ * @param value_to_find Pointer to the value to search for.
+ * @param index         Output pointer for the found index (decremented by 1 if
+ * swapped).
+ * @param result        Output pointer to allocated memory holding the found
+ * element.
+ *
+ * @return OK if found and result retrieved, NOT_FOUND if not found,
+ *         VECTOR_NULL_PTR if value_to_find is NULL, VECTOR_EMPTY if empty,
+ *         ALLOC_ERROR if memory allocation fails.
+ */
 enum VECTOR_ERRORS vector_improved_find(struct vector *v, void *value_to_find,
                                         int *index, void **result);
 
