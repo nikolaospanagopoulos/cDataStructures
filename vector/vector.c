@@ -301,12 +301,15 @@ size_t vector_capacity(struct vector *v) {
 
 void vector_clear(struct vector *v) {
   pthread_rwlock_wrlock(&v->lock);
+
   if (v->free_fn) {
     for (size_t i = 0; i < v->size; i++) {
       v->free_fn((char *)v->data + i * v->element_size);
     }
   }
-  memset(v->data, 0, v->element_size * v->size);
+
+  memset(v->data, 0, v->capacity * v->element_size);
   v->size = 0;
+
   pthread_rwlock_unlock(&v->lock);
 }
